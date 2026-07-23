@@ -2,22 +2,21 @@
 
 ## Features
 
-- Laravel 12
+- Laravel 13
 - Podman Compose
-- Nginx
-- PHP 8.4
-- PostgreSQL
+- Nginx-alpine
+- PHP 8.5-fpm-alpine
+- PostgreSQL 16-alpine
 - Hot Reload (Vite)
-- Production-like structure
 
 ## Requirements
 
-- Podman
+- podman
 - podman-compose
 
 ## Installation
 
-git clone ...
+git clone https://github.com/hadiset/laravel-podman-starter.git
 
 cp .env.example .env
 
@@ -27,4 +26,4 @@ composer install
 
 php artisan key:generate
 
-php artisan migrate
+php artisan migrate:fresh --seed
