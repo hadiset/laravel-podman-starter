@@ -10,5 +10,8 @@ RUN apk update && apk add \
 
 COPY --from=docker.io/library/composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN composer global require laravel/installer
+ENV PATH="$PATH:/root/.composer/vendor/bin"
+
 WORKDIR /var/www
 
