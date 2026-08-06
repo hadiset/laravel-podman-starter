@@ -1,4 +1,4 @@
-CONTAINER := laradock
+CONTAINER := laradocker
 
 .PHONY: setup env up npm composer key migrate perms fresh
 
