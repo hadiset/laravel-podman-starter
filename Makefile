@@ -1,6 +1,6 @@
 CONTAINER := laradocker
 
-.PHONY: setup env up npm composer key migrate perms fresh
+.PHONY: setup env up npm composer key migrate perms
 
 setup: env up npm composer key migrate perms ## Full setup from scratch
 
@@ -23,11 +23,8 @@ migrate: ## Fresh migrate + seed
 	podman exec -it $(CONTAINER) php artisan migrate:fresh --seed
 
 perms: ## Fix storage & cache permissions
-	chown -R www-data:www-data storage/ bootstrap/cache
-	chmod -R 755 storage/ bootstrap/cache
-
-fresh: ## Re-run just migrate:fresh --seed (for later resets, no reinstall)
-	podman exec -it $(CONTAINER) php artisan migrate:fresh --seed
+	podman exec -it $(CONTAINER) chown -R www-data:www-data storage/ bootstrap/cache
+	podman exec -it $(CONTAINER) chmod -R 755 storage/ bootstrap/cache
 
 down: ## Stop containers
 	podman-compose down
