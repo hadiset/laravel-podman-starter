@@ -38,9 +38,31 @@ services:
     networks:
       - laranet
 
+  dbgate:
+    image: docker.io/dbgate/dbgate
+    container_name: laragate
+    restart: always
+    ports:
+      - "8080:3000"
+    environment:
+      CONNECTIONS: con_pg
+      LABEL_con_pg: Local Postgres
+      SERVER_con_pg: postgres
+      USER_con_pg: larapg
+      PASSWORD_con_pg: larapg123
+      PORT_con_pg: 5432
+      DATABASE_con_pg: larapg_db
+      ENGINE_con_pg: postgres@dbgate-plugin-postgres
+    volumes:
+      - dbgate-data:/root/.dbgate
+    depends_on:
+      - postgres
+
 networks:
   laranet:
     driver: bridge
 
 volumes:
   pgdata:
+  dbgate-data:
+

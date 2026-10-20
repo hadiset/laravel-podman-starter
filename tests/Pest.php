@@ -1,6 +1,12 @@
 <?php
 
+use App\Enums\PermissionName;
+use App\Models\Role;
+use App\Models\User;
+use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 /*
@@ -16,7 +22,8 @@ use Tests\TestCase;
 
 pest()->extend(TestCase::class)
     ->use(RefreshDatabase::class)
-    ->in('Feature');
+    ->beforeEach(fn () => app(PermissionRegistrar::class)->forgetCachedPermissions())
+    ->in('Feature', '../resources/views');
 
 /*
 |--------------------------------------------------------------------------
@@ -44,7 +51,30 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+/**
+ * Create every application permission and the super-admin role.
+ */
+function seedPermissions(): void
 {
-    // ..
+    (new RolePermissionSeeder)->run();
+}
+
+/**
+ * Create a user holding exactly the given permissions (via a dedicated role).
+ */
+function userWithPermissions(PermissionName ...$permissions): User
+{
+    seedPermissions();
+
+    $role = Role::create(['name' => 'role-'.Str::lower(Str::random(8))]);
+    $role->syncPermissions(array_map(fn (PermissionName $p) => $p->value, $permissions));
+
+    return User::factory()->create()->assignRole($role);
+}
+
+function superAdmin(): User
+{
+    seedPermissions();
+
+    return User::factory()->create()->assignRole(Role::SUPER_ADMIN);
 }
