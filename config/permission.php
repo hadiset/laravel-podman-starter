@@ -218,7 +218,8 @@ return [
     ],
 
     /*
-     * The super-admin account created by AdminUserSeeder.
+     * The super-admin account created by AdminUserSeeder, from ADMIN_* in .env.
+     * The defaults are for local development only.
      */
 
     'default_admin' => [

@@ -41,3 +41,33 @@ test('the database seeder is idempotent', function () {
         ->and(Role::where('name', Role::SUPER_ADMIN)->count())->toBe(1)
         ->and(User::where('email', config('permission.default_admin.email'))->count())->toBe(1);
 });
+
+test('refuses the default admin password in production', function () {
+    app()->detectEnvironment(fn () => 'production');
+    config()->set('permission.default_admin.password', AdminUserSeeder::DEFAULT_PASSWORD);
+
+    // Called directly: db:seed asks for confirmation in production.
+    (new RolePermissionSeeder)->run();
+    (new AdminUserSeeder)->run();
+})->throws(RuntimeException::class, 'ADMIN_PASSWORD');
+
+test('seeds the admin in production when a real password is set', function () {
+    app()->detectEnvironment(fn () => 'production');
+    config()->set('permission.default_admin.password', 'a-real-secret');
+
+    (new RolePermissionSeeder)->run();
+    (new AdminUserSeeder)->run();
+
+    expect(User::where('email', config('permission.default_admin.email'))->first()?->hasRole(Role::SUPER_ADMIN))->toBeTrue();
+});
+
+test('re-seeding does not overwrite an existing admin password', function () {
+    $this->seed([RolePermissionSeeder::class, AdminUserSeeder::class]);
+    $admin = User::where('email', config('permission.default_admin.email'))->firstOrFail();
+    $admin->update(['password' => 'changed-by-admin']);
+
+    config()->set('permission.default_admin.password', 'something-else');
+    $this->seed(AdminUserSeeder::class);
+
+    expect(Hash::check('changed-by-admin', $admin->fresh()->password))->toBeTrue();
+});

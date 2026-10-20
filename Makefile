@@ -1,6 +1,6 @@
 CONTAINER := laradocker
 
-.PHONY: setup env up npm composer key migrate perms
+.PHONY: setup env up npm composer key migrate perms seed-permissions test lint down
 
 setup: env up npm composer key migrate perms ## Full setup from scratch
 
@@ -25,6 +25,15 @@ migrate: ## Fresh migrate + seed
 perms: ## Fix storage & cache permissions
 	podman exec -it $(CONTAINER) chown -R www-data:www-data storage/ bootstrap/cache
 	podman exec -it $(CONTAINER) chmod -R 755 storage/ bootstrap/cache
+
+seed-permissions: ## Create new PermissionName cases without wiping data
+	podman exec -it $(CONTAINER) php artisan db:seed --class=RolePermissionSeeder
+
+test: ## Pint check + PHPStan + Pest
+	podman exec -it $(CONTAINER) composer test
+
+lint: ## Fix code style with Pint
+	podman exec -it $(CONTAINER) composer lint
 
 down: ## Stop containers
 	podman-compose down

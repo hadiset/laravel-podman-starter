@@ -20,6 +20,8 @@ PHP/artisan/composer commands run **inside the container**: `podman exec -it lar
 make setup            # env + up + npm + composer + key + migrate:fresh --seed + perms
 make up / make down   # start / stop containers
 make migrate          # migrate:fresh --seed (destructive)
+make seed-permissions # add new PermissionName cases to the DB (non-destructive)
+make test / make lint # composer test / composer lint inside the container
 make perms            # fix storage/ & bootstrap/cache ownership for www-data
 npm run dev           # Vite hot reload
 
