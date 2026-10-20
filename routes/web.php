@@ -1,9 +1,9 @@
 <?php
 
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Route;
-use Spatie\Permission\Models\Permission;
 
 Route::view('/', 'welcome')->name('home');
 

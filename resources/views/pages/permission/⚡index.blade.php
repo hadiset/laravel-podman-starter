@@ -1,13 +1,13 @@
 <?php
 
+use App\Exceptions\ProtectedPermissionException;
 use App\Livewire\Forms\PermissionForm;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Permission;
+use App\Models\Permission;
 use SweetAlert2\Laravel\Traits\WithSweetAlert;
 
 new class extends Component {
@@ -31,9 +31,7 @@ new class extends Component {
     #[Computed]
     public function permissions()
     {
-        return Permission::when(filled($this->search), function (Builder $query) {
-            $query->where('name', 'like', '%' . $this->search . '%');
-        })
+        return Permission::search($this->search)
             ->orderBy('id', 'asc')
             ->paginate(5);
     }
@@ -60,6 +58,14 @@ new class extends Component {
         ]);
     }
 
+    public function errorModal(string $msg): void
+    {
+        $this->swalError([
+            'title' => 'Not allowed',
+            'text' => $msg,
+        ]);
+    }
+
     public function save(): void
     {
         $this->authorize('create', Permission::class);
@@ -82,7 +88,14 @@ new class extends Component {
     {
         $this->authorize('update', $this->loadedPermission());
 
-        $this->form->update();
+        try {
+            $this->form->update();
+        } catch (ProtectedPermissionException $e) {
+            $this->closeModal();
+            $this->errorModal($e->getMessage());
+
+            return;
+        }
 
         $this->closeModal();
         $this->successModal('Permission updated successfully.');
@@ -101,7 +114,14 @@ new class extends Component {
         $permission = $this->loadedPermission();
         $this->authorize('delete', $permission);
 
-        $permission->delete();
+        try {
+            $permission->delete();
+        } catch (ProtectedPermissionException $e) {
+            $this->closeModal();
+            $this->errorModal($e->getMessage());
+
+            return;
+        }
 
         $this->closeModal();
         $this->successModal('Permission deleted successfully.');
@@ -121,7 +141,7 @@ new class extends Component {
         </div>
 
         <div class="flex basis-1/3 justify-end">
-            @can('create', Spatie\Permission\Models\Permission::class)
+            @can('create', App\Models\Permission::class)
                 <flux:modal.trigger name="create-permission">
                     <flux:button icon="plus-circle" variant="primary" color="blue">Add Permission</flux:button>
                 </flux:modal.trigger>
@@ -140,21 +160,26 @@ new class extends Component {
                 <flux:table.row :key="$permission->id">
                     <flux:table.cell class="flex items-center gap-3">
                         {{ $permission->name }}
+                        @if ($permission->isSystem())
+                            <flux:badge size="sm" color="zinc">system</flux:badge>
+                        @endif
                     </flux:table.cell>
 
                     <flux:table.cell class="py-0">
-                        @can('update', $permission)
-                            <flux:modal.trigger name="edit-permission">
-                                <flux:button wire:click="edit({{ $permission->id }})" class="w-30" size="sm"
-                                    icon="pencil-square" variant="primary" color="emerald">Edit</flux:button>
-                            </flux:modal.trigger>
-                        @endcan
-                        @can('delete', $permission)
-                            <flux:modal.trigger name="delete-permission">
-                                <flux:button wire:click="deleteConfirm({{ $permission->id }})" class="w-30"
-                                    size="sm" icon="trash" variant="primary" color="red">Delete</flux:button>
-                            </flux:modal.trigger>
-                        @endcan
+                        @unless ($permission->isSystem())
+                            @can('update', $permission)
+                                <flux:modal.trigger name="edit-permission">
+                                    <flux:button wire:click="edit({{ $permission->id }})" class="w-30" size="sm"
+                                        icon="pencil-square" variant="primary" color="emerald">Edit</flux:button>
+                                </flux:modal.trigger>
+                            @endcan
+                            @can('delete', $permission)
+                                <flux:modal.trigger name="delete-permission">
+                                    <flux:button wire:click="deleteConfirm({{ $permission->id }})" class="w-30"
+                                        size="sm" icon="trash" variant="primary" color="red">Delete</flux:button>
+                                </flux:modal.trigger>
+                            @endcan
+                        @endunless
                     </flux:table.cell>
                 </flux:table.row>
             @endforeach

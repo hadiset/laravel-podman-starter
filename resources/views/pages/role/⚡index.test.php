@@ -1,10 +1,10 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Models\Permission;
 use App\Models\Role;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
 use SweetAlert2\Laravel\Swal;
 
 beforeEach(function () {
@@ -254,4 +254,12 @@ describe('authorization', function () {
 
         expect($role->fresh())->not->toBeNull();
     });
+});
+
+it('searches case-insensitively', function () {
+    Role::create(['name' => 'editor']);
+
+    Livewire::test('pages::role.index')
+        ->set('search', 'EDITOR')
+        ->assertSee('editor');
 });

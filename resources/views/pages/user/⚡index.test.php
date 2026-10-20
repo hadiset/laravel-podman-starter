@@ -186,3 +186,11 @@ describe('authorization', function () {
             ->assertDontSeeHtml('wire:click="editRoles(');
     });
 });
+
+it('searches case-insensitively', function () {
+    User::factory()->create(['name' => 'Jane Doe', 'email' => 'jane@example.test']);
+
+    Livewire::test('pages::user.index')
+        ->set('search', 'JANE@EXAMPLE')
+        ->assertSee('Jane Doe');
+});

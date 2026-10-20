@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\PermissionName;
 use App\Exceptions\ProtectedRoleException;
 use App\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -33,4 +34,18 @@ test('other roles can be renamed and deleted', function () {
 
 test('spatie resolves roles through the app Role model', function () {
     expect(app(PermissionRegistrar::class)->getRoleClass())->toBe(Role::class);
+});
+
+test('a refused deletion leaves the super-admin role on its users and permissions', function () {
+    $user = superAdmin();
+    $role = Role::findByName(Role::SUPER_ADMIN)->givePermissionTo(PermissionName::RoleView->value);
+
+    try {
+        $role->delete();
+    } catch (ProtectedRoleException) {
+        //
+    }
+
+    expect($user->fresh()->hasRole(Role::SUPER_ADMIN))->toBeTrue()
+        ->and($role->fresh()->hasPermissionTo(PermissionName::RoleView->value))->toBeTrue();
 });

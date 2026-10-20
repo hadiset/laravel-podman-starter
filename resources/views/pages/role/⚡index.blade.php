@@ -3,13 +3,12 @@
 use App\Exceptions\ProtectedRoleException;
 use App\Livewire\Forms\RoleForm;
 use App\Models\Role;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
-use Spatie\Permission\Models\Permission;
+use App\Models\Permission;
 use SweetAlert2\Laravel\Traits\WithSweetAlert;
 
 new class extends Component {
@@ -34,9 +33,7 @@ new class extends Component {
     public function roles()
     {
         return Role::withCount('permissions')
-            ->when(filled($this->search), function (Builder $query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
-            })
+            ->search($this->search)
             ->orderBy('id', 'asc')
             ->paginate(5);
     }

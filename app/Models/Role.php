@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Exceptions\ProtectedRoleException;
+use App\Models\Concerns\Searchable;
 use Spatie\Permission\Models\Role as SpatieRole;
 
 /**
@@ -12,6 +13,8 @@ use Spatie\Permission\Models\Role as SpatieRole;
  */
 class Role extends SpatieRole
 {
+    use Searchable;
+
     /**
      * Users with this role pass every Gate check (see AppServiceProvider).
      */
@@ -20,8 +23,11 @@ class Role extends SpatieRole
     /**
      * Guard the super-admin role at the model level, because Gate::before
      * lets super-admins skip policies entirely.
+     *
+     * The deleting guard is registered before parent::boot() so it runs ahead
+     * of Spatie's HasPermissions listener, which detaches permissions first.
      */
-    protected static function booted(): void
+    protected static function boot(): void
     {
         static::deleting(function (Role $role) {
             if ($role->isSuperAdmin()) {
@@ -29,6 +35,11 @@ class Role extends SpatieRole
             }
         });
 
+        parent::boot();
+    }
+
+    protected static function booted(): void
+    {
         static::updating(function (Role $role) {
             if ($role->isDirty('name') && $role->getOriginal('name') === self::SUPER_ADMIN) {
                 throw ProtectedRoleException::cannotRename(self::SUPER_ADMIN);
@@ -39,5 +50,13 @@ class Role extends SpatieRole
     public function isSuperAdmin(): bool
     {
         return $this->getOriginal('name', $this->name) === self::SUPER_ADMIN;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function searchableColumns(): array
+    {
+        return ['name'];
     }
 }

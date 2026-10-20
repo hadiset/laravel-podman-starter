@@ -3,8 +3,8 @@
 namespace App\Policies;
 
 use App\Enums\PermissionName;
+use App\Models\Permission;
 use App\Models\User;
-use Spatie\Permission\Models\Permission;
 
 class PermissionPolicy
 {
@@ -20,11 +20,11 @@ class PermissionPolicy
 
     public function update(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionName::PermissionUpdate);
+        return ! $permission->isSystem() && $user->can(PermissionName::PermissionUpdate);
     }
 
     public function delete(User $user, Permission $permission): bool
     {
-        return $user->can(PermissionName::PermissionDelete);
+        return ! $permission->isSystem() && $user->can(PermissionName::PermissionDelete);
     }
 }

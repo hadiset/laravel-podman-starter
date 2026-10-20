@@ -1,9 +1,10 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Models\Permission;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Livewire\Livewire;
-use Spatie\Permission\Models\Permission;
+use SweetAlert2\Laravel\Swal;
 
 beforeEach(function () {
     $this->actingAs(userWithPermissions(
@@ -243,4 +244,61 @@ describe('authorization', function () {
             ->assertDontSeeHtml('wire:click="edit(')
             ->assertDontSeeHtml('wire:click="deleteConfirm(');
     });
+});
+
+describe('system permissions', function () {
+    it('marks system permissions and hides their edit and delete buttons', function () {
+        $this->actingAs(superAdmin());
+
+        Livewire::test('pages::permission.index')
+            ->set('search', PermissionName::RoleView->value)
+            ->assertSee('system')
+            ->assertDontSeeHtml('wire:click="edit(')
+            ->assertDontSeeHtml('wire:click="deleteConfirm(');
+    });
+
+    it('cannot be edited or deleted by a permission manager', function () {
+        $permission = Permission::findByName(PermissionName::RoleView->value);
+
+        Livewire::test('pages::permission.index')
+            ->call('edit', $permission->id)
+            ->assertForbidden();
+
+        Livewire::test('pages::permission.index')
+            ->call('deleteConfirm', $permission->id)
+            ->assertForbidden();
+    });
+
+    it('cannot be deleted even by a super-admin', function () {
+        $this->actingAs(superAdmin());
+        $permission = Permission::findByName(PermissionName::RoleView->value);
+
+        Livewire::test('pages::permission.index')
+            ->call('deleteConfirm', $permission->id)
+            ->call('delete')
+            ->assertDispatched(Swal::SESSION_KEY, icon: 'error');
+
+        expect($permission->fresh())->not->toBeNull();
+    });
+
+    it('cannot be renamed even by a super-admin', function () {
+        $this->actingAs(superAdmin());
+        $permission = Permission::findByName(PermissionName::RoleView->value);
+
+        Livewire::test('pages::permission.index')
+            ->call('edit', $permission->id)
+            ->set('form.name', 'role.list')
+            ->call('update')
+            ->assertDispatched(Swal::SESSION_KEY, icon: 'error');
+
+        expect($permission->fresh()->name)->toBe(PermissionName::RoleView->value);
+    });
+});
+
+it('searches case-insensitively', function () {
+    Permission::create(['name' => 'report.export']);
+
+    Livewire::test('pages::permission.index')
+        ->set('search', 'REPORT')
+        ->assertSee('report.export');
 });

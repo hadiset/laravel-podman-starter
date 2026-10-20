@@ -3,9 +3,9 @@
 namespace App\Livewire\Forms;
 
 use App\Concerns\AccessControlValidationRules;
+use App\Models\Permission;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Livewire\Form;
-use Spatie\Permission\Models\Permission;
 
 class PermissionForm extends Form
 {

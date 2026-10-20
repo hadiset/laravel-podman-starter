@@ -1,13 +1,13 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\RolePermissionSeeder;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Permission;
 
 test('creates every application permission and the super-admin role', function () {
     $this->seed(RolePermissionSeeder::class);

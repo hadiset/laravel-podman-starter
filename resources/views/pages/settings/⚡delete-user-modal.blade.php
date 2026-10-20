@@ -2,6 +2,7 @@
 
 use App\Concerns\PasswordValidationRules;
 use App\Livewire\Actions\Logout;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -19,7 +20,17 @@ new class extends Component {
             'password' => $this->currentPasswordRules(),
         ]);
 
-        tap(Auth::user(), $logout(...))->delete();
+        /** @var User $user */
+        $user = Auth::user();
+
+        // Checked before logging out; User::deleting enforces it as well.
+        if ($user->isLastSuperAdmin()) {
+            $this->addError('account', __('You are the last super-admin. Grant the super-admin role to another user before deleting your account.'));
+
+            return;
+        }
+
+        tap($user, $logout(...))->delete();
 
         $this->redirect('/', navigate: true);
     }
@@ -36,6 +47,8 @@ new class extends Component {
         </div>
 
         <flux:input wire:model="password" :label="__('Password')" type="password" viewable />
+
+        <flux:error name="account" />
 
         <div class="flex justify-end space-x-2 rtl:space-x-reverse">
             <flux:modal.close>

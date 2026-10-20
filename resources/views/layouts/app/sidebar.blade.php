@@ -22,11 +22,11 @@
                 </flux:sidebar.item>
             </flux:sidebar.group>
 
-            @if (auth()->user()->can('viewAny', \Spatie\Permission\Models\Permission::class) ||
+            @if (auth()->user()->can('viewAny', \App\Models\Permission::class) ||
                     auth()->user()->can('viewAny', \App\Models\Role::class) ||
                     auth()->user()->can('viewAny', \App\Models\User::class))
                 <flux:sidebar.group :heading="__('Access Control')" class="grid">
-                    @can('viewAny', \Spatie\Permission\Models\Permission::class)
+                    @can('viewAny', \App\Models\Permission::class)
                         <flux:sidebar.item icon="clipboard-document-check" :href="route('permission')"
                             :current="request()->routeIs('permission')" wire:navigate>
                             {{ __('Permissions') }}

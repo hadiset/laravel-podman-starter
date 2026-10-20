@@ -3,6 +3,8 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Exceptions\ProtectedRoleException;
+use App\Models\Concerns\Searchable;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -34,7 +36,39 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, HasRoles;
+    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, Searchable, TwoFactorAuthenticatable;
+
+    /**
+     * Never leave the application without a super-admin, whatever the
+     * deletion path (account settings, tinker, a future admin page).
+     *
+     * Registered before parent::boot() so it runs ahead of Spatie's HasRoles
+     * listener, which detaches the user's roles first.
+     */
+    protected static function boot(): void
+    {
+        static::deleting(function (User $user) {
+            if ($user->isLastSuperAdmin()) {
+                throw ProtectedRoleException::lastSuperAdmin();
+            }
+        });
+
+        parent::boot();
+    }
+
+    public function isLastSuperAdmin(): bool
+    {
+        return $this->hasRole(Role::SUPER_ADMIN)
+            && static::role(Role::SUPER_ADMIN)->count() === 1;
+    }
+
+    /**
+     * @return list<string>
+     */
+    protected function searchableColumns(): array
+    {
+        return ['name', 'email'];
+    }
 
     /**
      * Get the attributes that should be cast.
@@ -57,7 +91,7 @@ class User extends Authenticatable implements PasskeyUser
         $initials = Str::initials($this->name, true);
 
         return Str::length($initials) > 1
-            ? Str::substr($initials, 0, 1) . Str::substr($initials, -1)
+            ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
     }
 }

@@ -34,12 +34,7 @@ new class extends Component {
     public function users()
     {
         return User::with('roles')
-            ->when(filled($this->search), function (Builder $query) {
-                $query->where(function (Builder $query) {
-                    $query->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('email', 'like', '%' . $this->search . '%');
-                });
-            })
+            ->search($this->search)
             ->orderBy('id', 'asc')
             ->paginate(10);
     }

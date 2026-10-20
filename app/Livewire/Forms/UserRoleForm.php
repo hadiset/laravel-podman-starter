@@ -66,7 +66,7 @@ class UserRoleForm extends Form
                 throw new AuthorizationException('Only super-admins can grant or revoke the super-admin role.');
             }
 
-            if ($hadSuperAdmin && User::role(Role::SUPER_ADMIN)->count() === 1) {
+            if ($this->user->isLastSuperAdmin()) {
                 throw ProtectedRoleException::lastSuperAdmin();
             }
         }

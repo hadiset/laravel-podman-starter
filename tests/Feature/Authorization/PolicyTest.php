@@ -1,9 +1,9 @@
 <?php
 
 use App\Enums\PermissionName;
+use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
-use Spatie\Permission\Models\Permission;
 
 describe('PermissionPolicy', function () {
     test('each ability requires its permission', function (string $ability, PermissionName $permission, bool $needsModel) {
@@ -57,5 +57,15 @@ describe('UserPolicy', function () {
 
         expect(userWithPermissions(PermissionName::UserAssignRole)->can('assignRole', $target))->toBeTrue()
             ->and(userWithPermissions(PermissionName::UserView)->can('assignRole', $target))->toBeFalse();
+    });
+});
+
+describe('PermissionPolicy system permissions', function () {
+    test('system permissions cannot be updated or deleted by permission managers', function () {
+        $user = userWithPermissions(PermissionName::PermissionUpdate, PermissionName::PermissionDelete);
+        $system = Permission::findByName(PermissionName::RoleView->value);
+
+        expect($user->can('update', $system))->toBeFalse()
+            ->and($user->can('delete', $system))->toBeFalse();
     });
 });
